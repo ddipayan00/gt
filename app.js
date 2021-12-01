@@ -1,39 +1,33 @@
-// const path = require('path') // USE FOR WIN/POSIX
-const express = require('express')
-const public = express.static('./public')
-const tasks = require('./routes/tasks')
-const bodyParser = require('body-parser')
-const connectDB = require('./db/connect')
-require('dotenv').config()
+const express = require('express');
+const app = express();
+const tasks = require('./routes/tasks');
+const connectDB = require('./db/connect');
+require('dotenv').config();
+const notFound = require('./middleware/not-found');
+const errorHandlerMiddleware = require('./middleware/error-handler');
 
-// APP
-const app = express()
-app.use(bodyParser.urlencoded({ extended: true }))
+// middleware
 
+app.use(express.static('./public'));
+app.use(express.json());
 
+// routes
 
-app.use('/',public)
-//app.use(bodyParser.raw())
-app.use(bodyParser.json())
+app.use('/api/v1/tasks', tasks);
 
-app.use('/api/v1/tasks',tasks)
+app.use(notFound);
+app.use(errorHandlerMiddleware);
+const port = process.env.PORT || 5000;
 
-
-
-
-// APP LISTEN
-const port = process.env.PORT || 5000
 const start = async () => {
-    try {
-        await connectDB(process.env.MONGO_URI)
-        app.listen(port,()=>{
-            console.log("Server started at port : 5000...........................................")
-        })
-    }
-    catch (err) {
-        console.log(err);
-    }
-}
+  try {
+    await connectDB(process.env.MONGO_URI);
+    app.listen(port, () =>
+      console.log(`Server is listening on port ${port}...`)
+    );
+  } catch (error) {
+    console.log(error);
+  }
+};
 
-// APP START
-start()
+start();
